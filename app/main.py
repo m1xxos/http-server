@@ -27,7 +27,8 @@ def main():
                 headers = f'Content-Type: text/plain\r\nContent-Length: {len(echo_message)}\r\n\r\n'
                 response = f"HTTP/1.1 200 OK\r\n{headers}{echo_message}\r\n\r\n".encode()
             if '/user-agent' in url:
-                request_agent = request_agent.split()[1]
+                request_agent = request_agent.strip("User-Agent:")
+                print(request_agent)
                 headers = f'Content-Type: text/plain\r\nContent-Length: {len(request_agent)}\r\n\r\n'
                 response = f"HTTP/1.1 200 OK\r\n{headers}{request_agent}\r\n\r\n".encode()
             print(response)
