@@ -17,17 +17,21 @@ def main():
             data = conn.recv(4096).decode()
             request = data.split("\r\n")[0]
             url = request.split(' ')[1]
+            request_agent = data.split("\r\n")[3]
             print("url:", url)
+
+            response = http_error_message
             if url == '/':
-                conn.sendall(http_ok_message)
+                response = http_ok_message
             if '/echo/' in url:
                 echo_message = str(url).split('/echo/')[1]
                 headers = f'Content-Type: text/plain\r\nContent-Length: {len(echo_message)}\r\n\r\n'
                 response = f"HTTP/1.1 200 OK\r\n{headers}{echo_message}\r\n\r\n".encode()
-                print(response)
-                conn.sendall(response)
-            else:
-                conn.sendall(http_error_message)
+            if '/user-agent' in url:
+                request_agent = request_agent.split()[1]
+                headers = f'Content-Type: text/plain\r\nContent-Length: {len(request_agent)}\r\n\r\n'
+                response = f"HTTP/1.1 200 OK\r\n{headers}{request_agent}\r\n\r\n".encode()
+            conn.sendall(response)
 
 
 if __name__ == "__main__":
