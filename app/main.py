@@ -14,7 +14,7 @@ def main():
         http_ok_message = b'HTTP/1.1 200 OK\r\n\r\n'
         http_error_message = b'HTTP/1.1 404 Not Found\r\n\r\n'
         with conn:
-            data = conn.recv(4096).decode()
+            data = conn.recv(1024).decode()
             request = data.split("\r\n")[0]
             url = request.split(' ')[1]
             request_agent = data.split("\r\n")[3]
