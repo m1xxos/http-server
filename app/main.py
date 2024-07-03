@@ -23,7 +23,7 @@ def main():
             if '/echo/' in url:
                 echo_message = str(url).split('/echo/')[1]
                 headers = f'Content-Type: text/plain\r\nContent-Length: {len(echo_message)}\r\n\r\n'
-                response = f"{http_ok_message.decode()}{headers}{echo_message}".encode()
+                response = f"HTTP/1.1 200 OK\r\n{headers}{echo_message}\r\n\r\n".encode()
                 print(response)
                 conn.sendall(response)
             else:
