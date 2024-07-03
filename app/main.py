@@ -49,7 +49,7 @@ def main():
             headers = f'Content-Type: text/plain\r\nContent-Length: {len(echo_message)}{CRLF}'
             response = f"{HTTP_OK_MESSAGE}\r\n{headers}{echo_message}{CRLF}"
         elif '/user-agent' in new_request.url:
-            request_agent = new_request.user_agent
+            request_agent = new_request.user_agent.split(" ")[1]
             headers = f'Content-Type: text/plain\r\nContent-Length: {len(request_agent)}{CRLF}'
             response = f"{HTTP_OK_MESSAGE}\r\n{headers}{request_agent}{CRLF}"
         print(response)
