@@ -30,6 +30,7 @@ class Request:
         return self.request_info.split(" ")[1]
 
     def filer_type(self, data, pattern):
+        print(data)
         return next(filter(None, [re.findall(pattern, _) for _ in data]))[0]
 
 def main():
