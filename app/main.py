@@ -54,7 +54,7 @@ def main():
                 response = f"{HTTP_OK_MESSAGE}\r\n{headers}{request_agent}{CRLF}"
             print(response)
             conn.sendall(response.encode())
-
+            conn.close()
 
 if __name__ == "__main__":
     main()
