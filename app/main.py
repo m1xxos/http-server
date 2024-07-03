@@ -17,8 +17,8 @@ def main():
             data = conn.recv(1024).decode()
             request = data.split("\r\n")[0]
             url = request.split(' ')[1]
-            request_agent = data.split("\r\n")[3]
-            print("data: ", data, "agent:", request_agent)
+            request_agent = data.split("\r\n")[2]
+            print("data: ", data.split("\r\n"), "agent:", request_agent)
 
             response = http_error_message
             if url == '/':
