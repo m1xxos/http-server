@@ -30,8 +30,7 @@ class Request:
         return self.request_info.split(" ")[1]
 
     def filer_type(self, data, pattern):
-        print(data)
-        return next(filter(None, [re.findall(pattern, _) for _ in data]))[0]
+        return next(filter(None, [re.findall(pattern, _) for _ in data]), "default")[0]
 
 def main():
     # You can use print statements as follows for debugging, they'll be visible when running tests.
