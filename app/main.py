@@ -22,12 +22,12 @@ def main():
             response = http_error_message
             if url == '/':
                 response = http_ok_message
-            if '/echo/' in url:
+            elif '/echo/' in url:
                 echo_message = str(url).split('/echo/')[1]
                 headers = f'Content-Type: text/plain\r\nContent-Length: {len(echo_message)}\r\n\r\n'
                 response = f"HTTP/1.1 200 OK\r\n{headers}{echo_message}\r\n\r\n".encode()
-            if '/user-agent' in url:
-                request_agent = request_agent.strip("User-Agent:")
+            elif '/user-agent' in url:
+                request_agent = request_agent.split(": ")[1]
                 print(request_agent)
                 headers = f'Content-Type: text/plain\r\nContent-Length: {len(request_agent)}\r\n\r\n'
                 response = f"HTTP/1.1 200 OK\r\n{headers}{request_agent}\r\n\r\n".encode()
