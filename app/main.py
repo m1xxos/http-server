@@ -16,8 +16,16 @@ def main():
         with conn:
             data = conn.recv(4096)
             url = data.split()[1]
+            conn.sendall
             if url == b'/':
                 conn.sendall(http_ok_message)
+            if b'/echo/' in url:
+                conn.sendall(http_ok_message)
+                echo_message = str(url).split('/echo/')[1].strip("'")
+                print(echo_message)
+                headers = f'Content-Type: text/plain\r\nContent-Length: {len(echo_message)}\r\n\r\n'
+                conn.sendall(bytes(headers, encoding='utf8'))
+                conn.sendall(bytes(echo_message, encoding='utf-8'))
             else:
                 conn.sendall(http_error_message)
 
