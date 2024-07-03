@@ -14,18 +14,18 @@ def main():
         http_ok_message = b'HTTP/1.1 200 OK\r\n\r\n'
         http_error_message = b'HTTP/1.1 404 Not Found\r\n\r\n'
         with conn:
-            data = conn.recv(4096)
-            url = data.split()[1]
-            conn.sendall
-            if url == b'/':
+            data = conn.recv(4096).decode()
+            request = data.split("\r\n")[0]
+            url = request.split(' ')[1]
+            print("url:", url)
+            if url == '/':
                 conn.sendall(http_ok_message)
-            if b'/echo/' in url:
-                conn.sendall(http_ok_message)
-                echo_message = str(url).split('/echo/')[1].strip("'")
-                print(echo_message)
+            if '/echo/' in url:
+                echo_message = str(url).split('/echo/')[1]
                 headers = f'Content-Type: text/plain\r\nContent-Length: {len(echo_message)}\r\n\r\n'
-                conn.sendall(bytes(headers, encoding='utf8'))
-                conn.sendall(bytes(echo_message, encoding='utf-8'))
+                response = f"{http_ok_message.decode()} {headers} {echo_message}".encode()
+                print(response)
+                conn.sendall(response)
             else:
                 conn.sendall(http_error_message)
 
