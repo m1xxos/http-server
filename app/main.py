@@ -1,39 +1,59 @@
 # Uncomment this to pass the first stage
 import socket
+import re
 
+HTTP_OK_MESSAGE = "HTTP/1.1 200 OK"
+HTTP_NOT_FOUND = "HTTP/1.1 404 Not Found"
+CRLF = "\r\n\r\n"
+
+
+class Request:
+    def __init__(self, conn: socket):
+        self._conn = conn
+        self.request_info, self.host, self.accept, self.user_agent = self.get_data()
+        self.url = self.get_url()
+        
+    def get_data(self):
+        host_re = "Host:.*"
+        accept_re = "Accept:.*"
+        user_agent_re = "User-Agent:.*"
+        data = self._conn.recv(1024).decode()
+        splitted_data = data.split("\r\n")
+        
+        _request = splitted_data[0] 
+        _host = self.filer_type(splitted_data, host_re)
+        _accept = self.filer_type(splitted_data, accept_re)
+        _user_agent = self.filer_type(splitted_data, user_agent_re)
+        return _request, _host, _accept, _user_agent
+    
+    def get_url(self):
+        return self.request_info.split(" ")[1]
+
+    def filer_type(self, data, pattern):
+        return next(filter(None, [re.findall(pattern, _) for _ in data]))[0]
 
 def main():
     # You can use print statements as follows for debugging, they'll be visible when running tests.
     print("Logs from your program will appear here!")
 
-    # Uncomment this to pass the first stage
-    #
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
         server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
         conn, _ = server_socket.accept()  # wait for client
-        http_ok_message = b'HTTP/1.1 200 OK\r\n\r\n'
-        http_error_message = b'HTTP/1.1 404 Not Found\r\n\r\n'
         with conn:
-            data = conn.recv(1024).decode()
-            request = data.split("\r\n")[0]
-            url = request.split(' ')[1]
-            request_agent = data.split("\r\n")[2]
-            print("data: ", data.split("\r\n"), "agent:", request_agent)
-
-            response = http_error_message
-            if url == '/':
-                response = http_ok_message
-            elif '/echo/' in url:
-                echo_message = str(url).split('/echo/')[1]
-                headers = f'Content-Type: text/plain\r\nContent-Length: {len(echo_message)}\r\n\r\n'
-                response = f"HTTP/1.1 200 OK\r\n{headers}{echo_message}\r\n\r\n".encode()
-            elif '/user-agent' in url:
-                request_agent = request_agent.split(": ")[1]
-                print(request_agent)
-                headers = f'Content-Type: text/plain\r\nContent-Length: {len(request_agent)}\r\n\r\n'
-                response = f"HTTP/1.1 200 OK\r\n{headers}{request_agent}\r\n\r\n".encode()
+            new_request = Request(conn)
+            response = HTTP_NOT_FOUND + CRLF
+            if new_request.url == '/':
+                response = HTTP_OK_MESSAGE + CRLF
+            elif '/echo/' in new_request.url:
+                echo_message = new_request.url.split('/echo/')[1]
+                headers = f'Content-Type: text/plain\r\nContent-Length: {len(echo_message)}{CRLF}'
+                response = f"{HTTP_OK_MESSAGE}\r\n{headers}{echo_message}{CRLF}"
+            elif '/user-agent' in new_request.url:
+                request_agent = new_request.user_agent
+                headers = f'Content-Type: text/plain\r\nContent-Length: {len(request_agent)}{CRLF}'
+                response = f"{HTTP_OK_MESSAGE}\r\n{headers}{request_agent}{CRLF}"
             print(response)
-            conn.sendall(response)
+            conn.sendall(response.encode())
 
 
 if __name__ == "__main__":
