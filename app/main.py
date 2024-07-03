@@ -18,6 +18,7 @@ def main():
             request = data.split("\r\n")[0]
             url = request.split(' ')[1]
             request_agent = data.split("\r\n")[3]
+            print("data: ", data, "agent:", request_agent)
 
             response = http_error_message
             if url == '/':
@@ -27,7 +28,6 @@ def main():
                 headers = f'Content-Type: text/plain\r\nContent-Length: {len(echo_message)}\r\n\r\n'
                 response = f"HTTP/1.1 200 OK\r\n{headers}{echo_message}\r\n\r\n".encode()
             elif '/user-agent' in url:
-                print(request_agent)
                 request_agent = request_agent.split(": ")[1]
                 print(request_agent)
                 headers = f'Content-Type: text/plain\r\nContent-Length: {len(request_agent)}\r\n\r\n'
