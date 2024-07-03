@@ -18,7 +18,6 @@ def main():
             request = data.split("\r\n")[0]
             url = request.split(' ')[1]
             request_agent = data.split("\r\n")[3]
-            print("url:", url)
 
             response = http_error_message
             if url == '/':
@@ -31,6 +30,7 @@ def main():
                 request_agent = request_agent.split()[1]
                 headers = f'Content-Type: text/plain\r\nContent-Length: {len(request_agent)}\r\n\r\n'
                 response = f"HTTP/1.1 200 OK\r\n{headers}{request_agent}\r\n\r\n".encode()
+            print(response)
             conn.sendall(response)
 
 
