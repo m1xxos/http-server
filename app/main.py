@@ -59,7 +59,7 @@ def main():
         server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
         while True:
             conn, _ = server_socket.accept()  # wait for client
-            thread = threading.Thread(target=receive_connection, args=(conn,))
+            # thread = threading.Thread(target=receive_connection, args=(conn,))
             thread.start() # test
 
 if __name__ == "__main__":
