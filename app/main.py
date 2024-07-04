@@ -49,7 +49,7 @@ def receive_connection(conn: socket):
     print(response)
     conn.sendall(response.encode())
     # CodeCrafters fix
-    # conn.close() 
+    conn.close() 
 
 def main():
     # You can use print statements as follows for debugging, they'll be visible when running tests.
