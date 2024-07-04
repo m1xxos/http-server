@@ -33,7 +33,7 @@ class Request:
     def filer_type(self, data, pattern):
         return next(filter(None, [re.findall(pattern, _) for _ in data]), "default")[0]
 
-def recieve_connection(conn: socket):
+def receive_connection(conn: socket):
     new_request = Request(conn)
     response = HTTP_NOT_FOUND + CRLF
     if new_request.url == '/':
@@ -58,7 +58,7 @@ def main():
         server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
         while True:
             conn, _ = server_socket.accept()  # wait for client
-            thread = threading.Thread(target=recieve_connection, args=(conn,))
+            thread = threading.Thread(target=receive_connection, args=(conn,))
             thread.start()
 
 if __name__ == "__main__":
