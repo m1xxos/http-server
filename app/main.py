@@ -1,6 +1,7 @@
 # Uncomment this to pass the first stage
 import socket
 import re
+import threading
 
 HTTP_OK_MESSAGE = "HTTP/1.1 200 OK"
 HTTP_NOT_FOUND = "HTTP/1.1 404 Not Found"
@@ -32,29 +33,33 @@ class Request:
     def filer_type(self, data, pattern):
         return next(filter(None, [re.findall(pattern, _) for _ in data]), "default")[0]
 
+def recieve_connection(conn: socket):
+    new_request = Request(conn)
+    response = HTTP_NOT_FOUND + CRLF
+    if new_request.url == '/':
+        response = HTTP_OK_MESSAGE + CRLF
+    elif '/echo/' in new_request.url:
+        echo_message = new_request.url.split('/echo/')[1]
+        headers = f'Content-Type: text/plain\r\nContent-Length: {len(echo_message)}{CRLF}'
+        response = f"{HTTP_OK_MESSAGE}\r\n{headers}{echo_message}{CRLF}"
+    elif '/user-agent' in new_request.url:
+        request_agent = new_request.user_agent.split(" ")[1]
+        headers = f'Content-Type: text/plain\r\nContent-Length: {len(request_agent)}{CRLF}'
+        response = f"{HTTP_OK_MESSAGE}\r\n{headers}{request_agent}{CRLF}"
+    print(response)
+    conn.sendall(response.encode())
+    conn.close()
+
 def main():
     # You can use print statements as follows for debugging, they'll be visible when running tests.
     print("Logs from your program will appear here!")
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
         server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
-        conn, _ = server_socket.accept()  # wait for client
-        
-        new_request = Request(conn)
-        response = HTTP_NOT_FOUND + CRLF
-        if new_request.url == '/':
-            response = HTTP_OK_MESSAGE + CRLF
-        elif '/echo/' in new_request.url:
-            echo_message = new_request.url.split('/echo/')[1]
-            headers = f'Content-Type: text/plain\r\nContent-Length: {len(echo_message)}{CRLF}'
-            response = f"{HTTP_OK_MESSAGE}\r\n{headers}{echo_message}{CRLF}"
-        elif '/user-agent' in new_request.url:
-            request_agent = new_request.user_agent.split(" ")[1]
-            headers = f'Content-Type: text/plain\r\nContent-Length: {len(request_agent)}{CRLF}'
-            response = f"{HTTP_OK_MESSAGE}\r\n{headers}{request_agent}{CRLF}"
-        print(response)
-        conn.sendall(response.encode())
-        conn.close()
+        while True:
+            conn, _ = server_socket.accept()  # wait for client
+            thread = threading.Thread(target=recieve_connection, args=(conn,))
+            thread.start()
 
 if __name__ == "__main__":
     main()
