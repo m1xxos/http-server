@@ -48,7 +48,8 @@ def receive_connection(conn: socket):
         response = f"{HTTP_OK_MESSAGE}\r\n{headers}{request_agent}{CRLF}"
     print(response)
     conn.sendall(response.encode())
-    # conn.close()
+    # CodeCrafters fix
+    # conn.close() 
 
 def main():
     # You can use print statements as follows for debugging, they'll be visible when running tests.
