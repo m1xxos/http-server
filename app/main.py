@@ -15,6 +15,7 @@ class Request:
         self._conn = conn
         self.request_info, self.host, self.accept, self.user_agent = self.get_data()
         self.url = self.get_url()
+        self.method = self.get_method()
         
     def get_data(self):
         host_re = "Host:.*"
@@ -33,6 +34,9 @@ class Request:
     
     def get_url(self):
         return self.request_info.split(" ")[1] if self.request_info else ""
+    
+    def get_method(self):
+        return self.request_info.split(" ")[0] if self.request_info else ""
 
     def filer_type(self, data, pattern):
         return next(filter(None, [re.findall(pattern, _) for _ in data]), "default")[0]
@@ -75,7 +79,9 @@ def receive_connection(conn: socket, file_folder):
             file_content = read_file(file_path)
             headers = f'Content-Type: application/octet-stream\r\nContent-Length: {file_path.stat().st_size}{CRLF}'
             response = f"{HTTP_OK_MESSAGE}\r\n{headers}{file_content}{CRLF}"
-
+    elif new_request.method == "POST":
+        pass     
+    print(new_request.method)
     print(response)
     conn.sendall(response.encode())
     # CodeCrafters fix
