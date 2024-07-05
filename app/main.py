@@ -48,9 +48,7 @@ class Request:
 
 def read_file(file_path):
     try:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            content = file.read()
-        return content
+        return Path(file_path).read_text(encoding='utf-8')
     except FileNotFoundError:
         return f"Файл '{file_path}' не найден."
     except Exception as e:
@@ -61,17 +59,17 @@ def receive_connection(conn: socket, file_folder):
     response = HTTP_NOT_FOUND + CRLF
     if new_request.url == '/':
         response = HTTP_OK_MESSAGE + CRLF
-    elif '/echo/' in new_request.url:
-        echo_message = new_request.url.split('/echo/')[1]
+    elif new_request.url.startswith('/echo/'):
+        echo_message = new_request.url[len('/echo/'):]
         headers = f'Content-Type: text/plain\r\nContent-Length: {len(echo_message)}{CRLF}'
         response = f"{HTTP_OK_MESSAGE}\r\n{headers}{echo_message}{CRLF}"
     elif '/user-agent' in new_request.url:
         request_agent = new_request.user_agent.split(" ")[1]
         headers = f'Content-Type: text/plain\r\nContent-Length: {len(request_agent)}{CRLF}'
         response = f"{HTTP_OK_MESSAGE}\r\n{headers}{request_agent}{CRLF}"
-    elif '/files/' in new_request.url:
+    elif new_request.url.startswith('/files/'):
         file_folder = Path(file_folder)
-        file_name = new_request.url.split("/")[-1]
+        file_name = new_request.url[len('/files/'):]
         file_path = file_folder / file_name
         if file_path.is_file():
             file_content = read_file(file_path)
