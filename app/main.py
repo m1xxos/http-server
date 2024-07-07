@@ -13,7 +13,8 @@ CRLF = "\r\n\r\n"
 class Request:
     def __init__(self, conn: socket):
         self._conn = conn
-        self.request_info, self.host, self.accept, self.user_agent = self.get_data()
+        self.request_info, self.host, self.accept, self.user_agent, self.content_type, \
+        self.body = self.get_data()
         self.url = self.get_url()
         self.method = self.get_method()
         
@@ -21,16 +22,19 @@ class Request:
         host_re = "Host:.*"
         accept_re = "Accept:.*"
         user_agent_re = "User-Agent:.*"
+        content_type_re = "Content-Type:.*"
         data = self._recv_all()
         if not data:
             return "", "", "", ""
         splitted_data = data.split("\r\n")
-        
+
         _request = splitted_data[0] if splitted_data else ""
         _host = self.filer_type(splitted_data, host_re)
         _accept = self.filer_type(splitted_data, accept_re)
         _user_agent = self.filer_type(splitted_data, user_agent_re)
-        return _request, _host, _accept, _user_agent
+        _content_type = self.filer_type(splitted_data, content_type_re)
+        _body = splitted_data[-1] if splitted_data else ""
+        return _request, _host, _accept, _user_agent, _content_type, _body
     
     def get_url(self):
         return self.request_info.split(" ")[1] if self.request_info else ""
@@ -79,8 +83,12 @@ def receive_connection(conn: socket, file_folder):
             file_content = read_file(file_path)
             headers = f'Content-Type: application/octet-stream\r\nContent-Length: {file_path.stat().st_size}{CRLF}'
             response = f"{HTTP_OK_MESSAGE}\r\n{headers}{file_content}{CRLF}"
-    elif new_request.method == "POST":
-        pass     
+    elif new_request.method == "POST" & new_request.content_type == "application/octet-stream":
+        file_name = new_request.url[len('/files/'):]
+        file_path = file_folder / file_name
+        with file_path.open('wb') as file:
+            file.write(new_request.body)
+
     print(new_request.method)
     print(response)
     conn.sendall(response.encode())
