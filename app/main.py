@@ -7,6 +7,8 @@ from pathlib import Path
 
 HTTP_OK_MESSAGE = "HTTP/1.1 200 OK"
 HTTP_NOT_FOUND = "HTTP/1.1 404 Not Found"
+HTTP_CREATED = "HTTP/1.1 201 Created"
+
 CRLF = "\r\n\r\n"
 
 
@@ -27,12 +29,13 @@ class Request:
         if not data:
             return "", "", "", ""
         splitted_data = data.split("\r\n")
-
         _request = splitted_data[0] if splitted_data else ""
         _host = self.filer_type(splitted_data, host_re)
         _accept = self.filer_type(splitted_data, accept_re)
         _user_agent = self.filer_type(splitted_data, user_agent_re)
         _content_type = self.filer_type(splitted_data, content_type_re)
+        _content_type = _content_type.split(" ")[1] if _content_type else ""
+        print(_content_type)
         _body = splitted_data[-1] if splitted_data else ""
         return _request, _host, _accept, _user_agent, _content_type, _body
     
@@ -43,7 +46,8 @@ class Request:
         return self.request_info.split(" ")[0] if self.request_info else ""
 
     def filer_type(self, data, pattern):
-        return next(filter(None, [re.findall(pattern, _) for _ in data]), "default")[0]
+        finder = next(filter(None, [re.findall(pattern, _) for _ in data]), "")
+        return finder[0] if finder else ""
     
     def _recv_all(self, buffer_size=1024):
         data = b''
@@ -79,17 +83,16 @@ def receive_connection(conn: socket, file_folder):
         file_folder = Path(file_folder)
         file_name = new_request.url[len('/files/'):]
         file_path = file_folder / file_name
-        if file_path.is_file():
+        if (new_request.method == "POST") & (new_request.content_type == "application/octet-stream"):
+            with file_path.open('wb') as file:
+                file.write(new_request.body.encode("utf-8"))
+                response = f"{HTTP_CREATED}{CRLF}"
+        elif file_path.is_file():
             file_content = read_file(file_path)
             headers = f'Content-Type: application/octet-stream\r\nContent-Length: {file_path.stat().st_size}{CRLF}'
             response = f"{HTTP_OK_MESSAGE}\r\n{headers}{file_content}{CRLF}"
-    elif new_request.method == "POST" & new_request.content_type == "application/octet-stream":
-        file_name = new_request.url[len('/files/'):]
-        file_path = file_folder / file_name
-        with file_path.open('wb') as file:
-            file.write(new_request.body)
 
-    print(new_request.method)
+    print(new_request.content_type)
     print(response)
     conn.sendall(response.encode())
     # CodeCrafters fix
