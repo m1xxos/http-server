@@ -18,10 +18,10 @@ class Request:
         self._conn = conn
         self.request_info, self.host, self.accept, self.user_agent, self.content_type, \
             self.body = self.get_data()
-        self.url = self.get_url()
-        self.method = self.get_method()
+        self.method, self.url, _ = self.get_request_info()
         
     def get_data(self):
+        """Split incoming request to variables"""
         host_re = "Host:.*"
         accept_re = "Accept:.*"
         user_agent_re = "User-Agent:.*"
@@ -41,11 +41,8 @@ class Request:
         _body = splitted_data[-1] if splitted_data else ""
         return _request, _host, _accept, _user_agent, _content_type, _body
     
-    def get_url(self):
-        return self.request_info.split(" ")[1] if self.request_info else ""
-    
-    def get_method(self):
-        return self.request_info.split(" ")[0] if self.request_info else ""
+    def get_request_info(self):
+        return self.request_info.split(" ") if self.request_info else ""
 
     def filer_type(self, data, pattern):
         finder = next(filter(None, [re.findall(pattern, _) for _ in data]), "")
@@ -68,6 +65,15 @@ def read_file(file_path):
     except Exception as e:
         return f"Ошибка при чтении файла: {e}"
 
+def write_file(file_path, content):
+    try:
+        with file_path.open('wb') as file:
+            file.write(content.encode("utf-8"))
+        return True
+    except Exception as e:
+        print(f"Ошибка при записи файла: {e}")
+        return False
+
 def receive_connection(conn: socket, file_folder):
     new_request = Request(conn)
     response = HTTP_NOT_FOUND + CRLF
@@ -87,9 +93,8 @@ def receive_connection(conn: socket, file_folder):
         file_name = new_request.url[len('/files/'):]
         file_path = file_folder / file_name
         if (new_request.method == "POST") & (new_request.content_type == "application/octet-stream"):
-            with file_path.open('wb') as file:
-                file.write(new_request.body.encode("utf-8"))
-                response = f"{HTTP_CREATED}{CRLF}"
+            write_file(file_path, new_request.body)
+            response = f"{HTTP_CREATED}{CRLF}"
         elif file_path.is_file():
             file_content = read_file(file_path)
             headers = f'Content-Type: application/octet-stream\r\nContent-Length: {file_path.stat().st_size}{CRLF}'
