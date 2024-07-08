@@ -14,9 +14,10 @@ CRLF = "\r\n\r\n"
 
 class Request:
     def __init__(self, conn: socket):
+        """Create new Request instance"""
         self._conn = conn
         self.request_info, self.host, self.accept, self.user_agent, self.content_type, \
-        self.body = self.get_data()
+            self.body = self.get_data()
         self.url = self.get_url()
         self.method = self.get_method()
         
@@ -33,9 +34,10 @@ class Request:
         _host = self.filer_type(splitted_data, host_re)
         _accept = self.filer_type(splitted_data, accept_re)
         _user_agent = self.filer_type(splitted_data, user_agent_re)
+        _user_agent = _user_agent.split(" ")[1] if _user_agent else ""
         _content_type = self.filer_type(splitted_data, content_type_re)
         _content_type = _content_type.split(" ")[1] if _content_type else ""
-        print(_content_type)
+        # print(_content_type)
         _body = splitted_data[-1] if splitted_data else ""
         return _request, _host, _accept, _user_agent, _content_type, _body
     
@@ -69,14 +71,15 @@ def read_file(file_path):
 def receive_connection(conn: socket, file_folder):
     new_request = Request(conn)
     response = HTTP_NOT_FOUND + CRLF
+    
     if new_request.url == '/':
         response = HTTP_OK_MESSAGE + CRLF
     elif new_request.url.startswith('/echo/'):
         echo_message = new_request.url[len('/echo/'):]
         headers = f'Content-Type: text/plain\r\nContent-Length: {len(echo_message)}{CRLF}'
         response = f"{HTTP_OK_MESSAGE}\r\n{headers}{echo_message}{CRLF}"
-    elif '/user-agent' in new_request.url:
-        request_agent = new_request.user_agent.split(" ")[1]
+    elif new_request.url.startswith('/user-agent'):
+        request_agent = new_request.user_agent
         headers = f'Content-Type: text/plain\r\nContent-Length: {len(request_agent)}{CRLF}'
         response = f"{HTTP_OK_MESSAGE}\r\n{headers}{request_agent}{CRLF}"
     elif new_request.url.startswith('/files/'):
@@ -92,7 +95,6 @@ def receive_connection(conn: socket, file_folder):
             headers = f'Content-Type: application/octet-stream\r\nContent-Length: {file_path.stat().st_size}{CRLF}'
             response = f"{HTTP_OK_MESSAGE}\r\n{headers}{file_content}{CRLF}"
 
-    print(new_request.content_type)
     print(response)
     conn.sendall(response.encode())
     # CodeCrafters fix
