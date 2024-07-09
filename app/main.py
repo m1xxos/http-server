@@ -13,13 +13,13 @@ CRLF = "\r\n\r\n"
 
 
 class Request:
-    def __init__(self, conn: socket):
+    def __init__(self, conn: socket.socket):
         """Create new Request instance"""
         self._conn = conn
         self.request_info, self.host, self.accept, self.user_agent, self.content_type, \
             self.body = self.get_data()
         self.method, self.url, _ = self.get_request_info()
-        
+
     def get_data(self):
         """Split incoming request to variables"""
         host_re = "Host:.*"
@@ -40,14 +40,14 @@ class Request:
         # print(_content_type)
         _body = splitted_data[-1] if splitted_data else ""
         return _request, _host, _accept, _user_agent, _content_type, _body
-    
+
     def get_request_info(self):
         return self.request_info.split(" ") if self.request_info else ""
 
     def filer_type(self, data, pattern):
         finder = next(filter(None, [re.findall(pattern, _) for _ in data]), "")
         return finder[0] if finder else ""
-    
+
     def _recv_all(self, buffer_size=1024):
         data = b''
         while True:
@@ -74,10 +74,10 @@ def write_file(file_path, content):
         print(f"Ошибка при записи файла: {e}")
         return False
 
-def receive_connection(conn: socket, file_folder):
+def receive_connection(conn: socket.socket, file_folder):
     new_request = Request(conn)
     response = HTTP_NOT_FOUND + CRLF
-    
+
     if new_request.url == '/':
         response = HTTP_OK_MESSAGE + CRLF
     elif new_request.url.startswith('/echo/'):
@@ -103,7 +103,7 @@ def receive_connection(conn: socket, file_folder):
     print(response)
     conn.sendall(response.encode())
     # CodeCrafters fix
-    conn.close() 
+    conn.close()
 
 def main():
     parser = argparse.ArgumentParser(description="HTTP сервер")
