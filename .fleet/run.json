@@ -1,0 +1,11 @@
+{
+    "configurations": [
+        {
+            "type": "command",
+            "name": "Command configuration",
+            "program": "$PROJECT_DIR$/your_server.sh"
+        },
+        
+        
+    ]
+}

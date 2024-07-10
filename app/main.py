@@ -1,6 +1,5 @@
 import argparse
 import socket
-import re
 import threading
 from pathlib import Path
 
@@ -16,37 +15,27 @@ class Request:
     def __init__(self, conn: socket.socket):
         """Create new Request instance"""
         self._conn = conn
-        self.request_info, self.host, self.accept, self.user_agent, self.content_type, \
-            self.body = self.get_data()
-        self.method, self.url, _ = self.get_request_info()
-
-    def get_data(self):
+        self.method, self.url, self.headers, self.body = self.get_data()
+        self.host = self.headers["Host"] if "Host" in self.headers else ""
+        self.user_agent = self.headers["User-Agent"] if "User-Agent" in self.headers else ""
+        self.content_type = self.headers["Content-Type"] if "Content-Type" in self.headers else ""
+    def get_data(self) -> tuple[str, str, dict, str]:
         """Split incoming request to variables"""
-        host_re = "Host:.*"
-        accept_re = "Accept:.*"
-        user_agent_re = "User-Agent:.*"
-        content_type_re = "Content-Type:.*"
         data = self._recv_all()
         if not data:
-            return "", "", "", ""
-        splitted_data = data.split("\r\n")
-        _request = splitted_data[0] if splitted_data else ""
-        _host = self.filer_type(splitted_data, host_re)
-        _accept = self.filer_type(splitted_data, accept_re)
-        _user_agent = self.filer_type(splitted_data, user_agent_re)
-        _user_agent = _user_agent.split(" ")[1] if _user_agent else ""
-        _content_type = self.filer_type(splitted_data, content_type_re)
-        _content_type = _content_type.split(" ")[1] if _content_type else ""
-        # print(_content_type)
-        _body = splitted_data[-1] if splitted_data else ""
-        return _request, _host, _accept, _user_agent, _content_type, _body
+            return "", "", {}, ""
+        header_data, body = data.split(CRLF, 1)
+        header_lines = header_data.split("\r\n")
 
-    def get_request_info(self):
-        return self.request_info.split(" ") if self.request_info else ""
+        # Extract request line (method and URL)
+        request_line = header_lines[0] if header_lines else ""
+        method, url, _ = request_line.split(" ")
+        headers = {}
+        for line in header_lines[1:]:
+            key, value = line.split(": ", 1)
+            headers[key] = value
 
-    def filer_type(self, data, pattern):
-        finder = next(filter(None, [re.findall(pattern, _) for _ in data]), "")
-        return finder[0] if finder else ""
+        return method, url, headers, body
 
     def _recv_all(self, buffer_size=1024):
         data = b''
@@ -102,7 +91,6 @@ def receive_connection(conn: socket.socket, file_folder):
 
     print(response)
     conn.sendall(response.encode())
-    # CodeCrafters fix
     conn.close()
 
 def main():
@@ -111,8 +99,7 @@ def main():
     args = parser.parse_args()
     file_folder = args.directory
 
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
-        server_socket = socket.create_server(("localhost", 4221), reuse_port=True)
+    with socket.create_server(("localhost", 4221), reuse_port=True) as server_socket:
         while True:
             conn, _ = server_socket.accept()  # wait for client
             thread = threading.Thread(target=receive_connection, args=(conn,file_folder,))
